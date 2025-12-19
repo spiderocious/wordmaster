@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { gameController } from '@controllers';
-import { startGameValidation, bulkAddWordsValidation, validateRequest } from '@requests';
+import { startGameValidation, bulkAddWordsValidation, checkWordsValidation, validateRequest } from '@requests';
 
 const router = Router();
 
@@ -24,6 +24,14 @@ router.post(
   bulkAddWordsValidation,
   validateRequest,
   gameController.bulkAddWords.bind(gameController)
+);
+
+// Check if words exist in database
+router.post(
+  '/words/check',
+  checkWordsValidation,
+  validateRequest,
+  gameController.checkWords.bind(gameController)
 );
 
 export default router;
