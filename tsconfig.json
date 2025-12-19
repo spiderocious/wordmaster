@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@controllers": ["controllers/index.ts"],
+      "@controllers/*": ["controllers/*"],
+      "@services": ["services/index.ts"],
+      "@services/*": ["services/*"],
+      "@routes": ["routes/index.ts"],
+      "@routes/*": ["routes/*"],
+      "@utils": ["utils/index.ts"],
+      "@utils/*": ["utils/*"],
+      "@shared": ["shared/index.ts"],
+      "@shared/*": ["shared/*"],
+      "@configs": ["configs/index.ts"],
+      "@configs/*": ["configs/*"],
+      "@requests": ["requests/index.ts"],
+      "@requests/*": ["requests/*"],
+      "@models": ["models/index.ts"],
+      "@models/*": ["models/*"],
+      "@middlewares": ["middlewares/index.ts"],
+      "@middlewares/*": ["middlewares/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
