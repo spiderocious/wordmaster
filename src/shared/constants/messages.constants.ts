@@ -40,6 +40,15 @@ export const MESSAGE_KEYS = {
   // Rate limiting
   TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
   TOO_MANY_AUTH_ATTEMPTS: 'TOO_MANY_AUTH_ATTEMPTS',
+
+  // Validation comments
+  VALIDATION_FAST: 'VALIDATION_FAST',
+  VALIDATION_GENIUS: 'VALIDATION_GENIUS',
+  VALIDATION_INSANE: 'VALIDATION_INSANE',
+  VALIDATION_GOOD: 'VALIDATION_GOOD',
+  VALIDATION_RARE: 'VALIDATION_RARE',
+  VALIDATION_NICE: 'VALIDATION_NICE',
+  VALIDATION_EXCELLENT: 'VALIDATION_EXCELLENT',
 } as const;
 
 export type MessageKey = keyof typeof MESSAGE_KEYS;
@@ -171,6 +180,43 @@ export const MESSAGES = {
     en: 'Too many authentication attempts, please try again later',
     es: 'Demasiados intentos de autenticación, inténtelo más tarde',
     fr: "Trop de tentatives d'authentification, veuillez réessayer plus tard",
+  },
+
+  // Validation comments
+  VALIDATION_FAST: {
+    en: 'Fast!',
+    es: '¡Rápido!',
+    fr: 'Rapide!',
+  },
+  VALIDATION_GENIUS: {
+    en: 'Genius!',
+    es: '¡Genio!',
+    fr: 'Génie!',
+  },
+  VALIDATION_INSANE: {
+    en: 'Insane!',
+    es: '¡Increíble!',
+    fr: 'Incroyable!',
+  },
+  VALIDATION_GOOD: {
+    en: 'Good!',
+    es: '¡Bien!',
+    fr: 'Bien!',
+  },
+  VALIDATION_RARE: {
+    en: 'Rare word!',
+    es: '¡Palabra rara!',
+    fr: 'Mot rare!',
+  },
+  VALIDATION_NICE: {
+    en: 'Nice!',
+    es: '¡Bueno!',
+    fr: 'Bien!',
+  },
+  VALIDATION_EXCELLENT: {
+    en: 'Excellent!',
+    es: '¡Excelente!',
+    fr: 'Excellent!',
   },
 } as const;
 

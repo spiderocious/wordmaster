@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { gameService } from '@services';
-import { asyncHandler, handleServiceResult } from '@utils';
+import { asyncHandler, handleServiceResult, ResponseUtil } from '@utils';
 
 export class GameController {
   /**
@@ -62,8 +62,9 @@ export class GameController {
    */
   public validateAnswers = asyncHandler(async (req: Request, res: Response) => {
     const answers = req.body;
+    const lang = ResponseUtil.extractLanguage(req);
 
-    const result = await gameService.validateAnswers(answers);
+    const result = await gameService.validateAnswers(answers, lang);
 
     return handleServiceResult(res, result);
   });

@@ -1,8 +1,9 @@
 import { letterService } from './letter.service';
-import { WordModel } from '@models';
+import { cacheService } from './cache.service';
+import { WordModel, ValidationModel } from '@models';
 import { generateId, logger } from '@utils';
 import { IGame, IRound, ICategory, StartGameDTO, ServiceResult, ServiceSuccess, ServiceError } from '@shared/types';
-import { MESSAGE_KEYS } from '@shared/constants';
+import { MESSAGE_KEYS, getMessage, Language } from '@shared/constants';
 
 export class GameService {
   private static instance: GameService;
@@ -11,7 +12,7 @@ export class GameService {
   private static readonly DEFAULT_SUPPORTED_CATEGORIES = ['name', 'place', 'animal', 'city'];
   private static readonly MIN_CATEGORIES_PER_ROUND = 3;
   private static readonly MAX_CATEGORIES_PER_ROUND = 5;
-  private static readonly DEFAULT_TIME_LIMIT = 30; // seconds
+  private static readonly DEFAULT_TIME_LIMIT = 20; // seconds
 
   private static readonly CATEGORY_DISPLAY_NAMES: Record<string, string> = {
     name: 'Name',
@@ -336,18 +337,91 @@ export class GameService {
   }
 
   /**
+   * Get validation comment based on word rarity and time left
+   */
+  private getValidationComment(
+    wordPopularity: number,
+    timeLeft: number | undefined,
+    lang: Language = 'en'
+  ): string | undefined {
+    // If no timeLeft or very low, less likely to get comments
+    if (!timeLeft || timeLeft < 0.3) {
+      // Only rare words get comments when slow
+      if (wordPopularity < 10) {
+        return getMessage(MESSAGE_KEYS.VALIDATION_RARE, lang);
+      }
+      return undefined;
+    }
+
+    // Very fast (80%+ time remaining)
+    if (timeLeft >= 0.8) {
+      if (wordPopularity < 10) {
+        return getMessage(MESSAGE_KEYS.VALIDATION_INSANE, lang); // Fast + rare
+      }
+      return getMessage(MESSAGE_KEYS.VALIDATION_GENIUS, lang); // Just fast
+    }
+
+    // Fast (60-79% time remaining)
+    if (timeLeft >= 0.6) {
+      if (wordPopularity < 20) {
+        return getMessage(MESSAGE_KEYS.VALIDATION_EXCELLENT, lang); // Good + rare
+      }
+      return getMessage(MESSAGE_KEYS.VALIDATION_FAST, lang);
+    }
+
+    // Decent (40-59% time remaining)
+    if (timeLeft >= 0.4) {
+      if (wordPopularity < 15) {
+        return getMessage(MESSAGE_KEYS.VALIDATION_NICE, lang); // Decent + rare
+      }
+      return getMessage(MESSAGE_KEYS.VALIDATION_GOOD, lang);
+    }
+
+    // Moderate (30-39% time remaining)
+    if (wordPopularity < 10) {
+      return getMessage(MESSAGE_KEYS.VALIDATION_RARE, lang); // Rare word
+    }
+
+    return undefined; // No comment for average performance
+  }
+
+  /**
+   * Track validation in background (non-blocking)
+   */
+  private trackValidation(word: string, letter: string, category: string): void {
+    // Fire and forget - don't await
+    setImmediate(async () => {
+      try {
+        await ValidationModel.findOneAndUpdate(
+          { word, letter, category },
+          { $inc: { count: 1 } },
+          { upsert: true, new: true }
+        );
+      } catch (error: any) {
+        logger.error('Error tracking validation', { word, letter, category, error: error.message });
+      }
+    });
+  }
+
+  /**
    * Validate game answers and calculate scores
    */
-  public async validateAnswers(answers: Array<{
-    letter: string;
-    word: string;
-    category: string;
-    timeLeft?: number;
-  }>): Promise<ServiceResult<Array<{
+  public async validateAnswers(
+    answers: Array<{
+      letter: string;
+      word: string;
+      category: string;
+      timeLeft?: number;
+    }>,
+    lang: Language = 'en'
+  ): Promise<ServiceResult<Array<{
     valid: boolean;
     wordScore: number;
     wordBonus: number;
     totalScore: number;
+    word: string;
+    category: string;
+    comment?: string;
   }>>> {
     try {
       const results = [];
@@ -367,16 +441,29 @@ export class GameService {
             wordScore: 0,
             wordBonus: 0,
             totalScore: 0,
+            word: trimmedWord,
+            category: trimmedCategory,
           });
           continue;
         }
 
-        // Check if word exists in database with the specified category
-        const foundWord = await WordModel.findOne({
-          word: trimmedWord,
-          category: trimmedCategory,
-          startsWith: letterLower,
-        });
+        // Try cache first for faster response
+        const cacheKey = `word:validate:${trimmedWord}:${trimmedCategory}:${letterLower}`;
+        let foundWord = cacheService.get<any>(cacheKey);
+
+        if (!foundWord) {
+          // Check if word exists in database with the specified category
+          foundWord = await WordModel.findOne({
+            word: trimmedWord,
+            category: trimmedCategory,
+            startsWith: letterLower,
+          }).select('word category popularity').lean();
+
+          if (foundWord) {
+            // Cache valid words for 1 hour
+            cacheService.set(cacheKey, foundWord, 3600);
+          }
+        }
 
         if (!foundWord) {
           results.push({
@@ -384,19 +471,30 @@ export class GameService {
             wordScore: 0,
             wordBonus: 0,
             totalScore: 0,
+            word: trimmedWord,
+            category: trimmedCategory,
           });
           continue;
         }
 
+        // Track validation in background (non-blocking)
+        this.trackValidation(trimmedWord, letterLower, trimmedCategory);
+
         // Calculate bonus based on timeLeft (if provided)
         const wordBonus = timeLeft ? Math.floor(timeLeft * baseWordScore) : 0;
         const totalScore = baseWordScore + wordBonus;
+
+        // Get validation comment based on word rarity and speed
+        const comment = this.getValidationComment(foundWord.popularity || 0, timeLeft, lang);
 
         results.push({
           valid: true,
           wordScore: baseWordScore,
           wordBonus,
           totalScore,
+          word: trimmedWord,
+          category: trimmedCategory,
+          ...(comment && { comment }),
         });
       }
 
