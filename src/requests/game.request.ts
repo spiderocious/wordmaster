@@ -48,3 +48,32 @@ export const checkWordsValidation = [
     .notEmpty()
     .withMessage('Each word must be a non-empty string'),
 ];
+
+export const validateAnswersValidation = [
+  body()
+    .isArray({ min: 1 })
+    .withMessage('Answers must be a non-empty array'),
+
+  body('*.letter')
+    .isString()
+    .trim()
+    .isLength({ min: 1, max: 1 })
+    .withMessage('Letter must be a single character'),
+
+  body('*.word')
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage('Word must be a non-empty string'),
+
+  body('*.category')
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage('Category must be a non-empty string'),
+
+  body('*.timeLeft')
+    .optional()
+    .isFloat({ min: 0, max: 1 })
+    .withMessage('Time left must be a decimal between 0 and 1'),
+];

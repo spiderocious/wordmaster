@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { gameController } from '@controllers';
-import { startGameValidation, bulkAddWordsValidation, checkWordsValidation, validateRequest } from '@requests';
+import { startGameValidation, bulkAddWordsValidation, checkWordsValidation, validateAnswersValidation, validateRequest } from '@requests';
 
 const router = Router();
 
@@ -32,6 +32,14 @@ router.post(
   checkWordsValidation,
   validateRequest,
   gameController.checkWords.bind(gameController)
+);
+
+// Validate game answers and calculate scores
+router.post(
+  '/validate',
+  validateAnswersValidation,
+  validateRequest,
+  gameController.validateAnswers.bind(gameController)
 );
 
 export default router;

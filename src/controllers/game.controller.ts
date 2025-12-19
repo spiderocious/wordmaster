@@ -56,6 +56,17 @@ export class GameController {
 
     return handleServiceResult(res, result);
   });
+
+  /**
+   * Validate game answers and calculate scores
+   */
+  public validateAnswers = asyncHandler(async (req: Request, res: Response) => {
+    const answers = req.body;
+
+    const result = await gameService.validateAnswers(answers);
+
+    return handleServiceResult(res, result);
+  });
 }
 
 export const gameController = new GameController();

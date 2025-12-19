@@ -334,6 +334,78 @@ export class GameService {
       return new ServiceError(MESSAGE_KEYS.INTERNAL_SERVER_ERROR, MESSAGE_KEYS.INTERNAL_SERVER_ERROR);
     }
   }
+
+  /**
+   * Validate game answers and calculate scores
+   */
+  public async validateAnswers(answers: Array<{
+    letter: string;
+    word: string;
+    category: string;
+    timeLeft?: number;
+  }>): Promise<ServiceResult<Array<{
+    valid: boolean;
+    wordScore: number;
+    wordBonus: number;
+    totalScore: number;
+  }>>> {
+    try {
+      const results = [];
+      const baseWordScore = 100;
+
+      for (const answer of answers) {
+        const { letter, word, category, timeLeft } = answer;
+
+        const trimmedWord = word.trim().toLowerCase();
+        const trimmedCategory = category.trim().toLowerCase();
+        const letterLower = letter.toLowerCase();
+
+        // Check if word starts with the correct letter
+        if (!trimmedWord.startsWith(letterLower)) {
+          results.push({
+            valid: false,
+            wordScore: 0,
+            wordBonus: 0,
+            totalScore: 0,
+          });
+          continue;
+        }
+
+        // Check if word exists in database with the specified category
+        const foundWord = await WordModel.findOne({
+          word: trimmedWord,
+          category: trimmedCategory,
+          startsWith: letterLower,
+        });
+
+        if (!foundWord) {
+          results.push({
+            valid: false,
+            wordScore: 0,
+            wordBonus: 0,
+            totalScore: 0,
+          });
+          continue;
+        }
+
+        // Calculate bonus based on timeLeft (if provided)
+        const wordBonus = timeLeft ? Math.floor(timeLeft * baseWordScore) : 0;
+        const totalScore = baseWordScore + wordBonus;
+
+        results.push({
+          valid: true,
+          wordScore: baseWordScore,
+          wordBonus,
+          totalScore,
+        });
+      }
+
+      return new ServiceSuccess(results);
+    } catch (error: any) {
+      logger.error('Error validating answers', error);
+      return new ServiceError(MESSAGE_KEYS.INTERNAL_SERVER_ERROR, MESSAGE_KEYS.INTERNAL_SERVER_ERROR);
+    }
+  }
 }
 
 export const gameService = GameService.getInstance();
