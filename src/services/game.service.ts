@@ -404,6 +404,50 @@ export class GameService {
   }
 
   /**
+   * Get possible answers for a category and letter (1-3 suggestions)
+   */
+  private async getPossibleAnswers(letter: string, category: string): Promise<string[]> {
+    try {
+      const cacheKey = `possible:${letter}:${category}`;
+      const cached = cacheService.get<string[]>(cacheKey);
+
+      if (cached) {
+        return cached;
+      }
+
+      // Get random words for this letter and category
+      const words = await WordModel.find({
+        startsWith: letter.toLowerCase(),
+        category: category.toLowerCase(),
+      })
+        .select('word')
+        .limit(10)
+        .lean();
+
+      if (words.length === 0) {
+        return [];
+      }
+
+      // Shuffle and take 1-3 random words
+      const shuffled = words.sort(() => Math.random() - 0.5);
+      const count = Math.min(Math.max(1, Math.floor(Math.random() * 3) + 1), shuffled.length);
+      const possibleAnswers = shuffled.slice(0, count).map((w: any) => {
+        // Capitalize first letter
+        const word = w.word;
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      });
+
+      // Cache for 5 minutes
+      cacheService.set(cacheKey, possibleAnswers, 300);
+
+      return possibleAnswers;
+    } catch (error: any) {
+      logger.error('Error getting possible answers', error);
+      return [];
+    }
+  }
+
+  /**
    * Validate game answers and calculate scores
    */
   public async validateAnswers(
@@ -421,7 +465,9 @@ export class GameService {
     totalScore: number;
     word: string;
     category: string;
+    letter: string;
     comment?: string;
+    possibleAnswers?: string[];
   }>>> {
     try {
       const results = [];
@@ -433,9 +479,12 @@ export class GameService {
         const trimmedWord = word.trim().toLowerCase();
         const trimmedCategory = category.trim().toLowerCase();
         const letterLower = letter.toLowerCase();
+        const letterUpper = letter.toUpperCase();
 
         // Check if word starts with the correct letter
         if (!trimmedWord.startsWith(letterLower)) {
+          const possibleAnswers = await this.getPossibleAnswers(letterLower, trimmedCategory);
+
           results.push({
             valid: false,
             wordScore: 0,
@@ -443,6 +492,8 @@ export class GameService {
             totalScore: 0,
             word: trimmedWord,
             category: trimmedCategory,
+            letter: letterUpper,
+            possibleAnswers,
           });
           continue;
         }
@@ -466,6 +517,8 @@ export class GameService {
         }
 
         if (!foundWord) {
+          const possibleAnswers = await this.getPossibleAnswers(letterLower, trimmedCategory);
+
           results.push({
             valid: false,
             wordScore: 0,
@@ -473,6 +526,8 @@ export class GameService {
             totalScore: 0,
             word: trimmedWord,
             category: trimmedCategory,
+            letter: letterUpper,
+            possibleAnswers,
           });
           continue;
         }
@@ -494,6 +549,7 @@ export class GameService {
           totalScore,
           word: trimmedWord,
           category: trimmedCategory,
+          letter: letterUpper,
           ...(comment && { comment }),
         });
       }
