@@ -66,12 +66,13 @@ export class GameService {
   }
 
   /**
-   * Convert category names to ICategory objects with display names
+   * Convert category names to ICategory objects with display names and timeLimit
    */
   private categoriesToObjects(categoryNames: string[]): ICategory[] {
     return categoryNames.map((name) => ({
       name,
       displayName: GameService.CATEGORY_DISPLAY_NAMES[name] || name.charAt(0).toUpperCase() + name.slice(1),
+      timeLimit: GameService.DEFAULT_TIME_LIMIT,
     }));
   }
 
@@ -103,7 +104,6 @@ export class GameService {
       roundNumber,
       letter,
       categories: this.categoriesToObjects(selectedCategories),
-      timeLimit: GameService.DEFAULT_TIME_LIMIT,
     };
   }
 

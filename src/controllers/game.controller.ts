@@ -7,7 +7,8 @@ export class GameController {
    * Start a new single player game
    */
   public startSingleGame = asyncHandler(async (req: Request, res: Response) => {
-    const { rounds, supportedCategories } = req.body;
+    const rounds = req.body?.rounds;
+    const supportedCategories = req.body?.supportedCategories;
 
     const result = await gameService.startSingleGame({
       rounds,

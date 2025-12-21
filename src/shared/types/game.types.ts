@@ -1,13 +1,13 @@
 export interface ICategory {
   name: string;
   displayName: string;
+  timeLimit: number;
 }
 
 export interface IRound {
   roundNumber: number;
   letter: string;
   categories: ICategory[];
-  timeLimit: number;
 }
 
 export interface IGame {
