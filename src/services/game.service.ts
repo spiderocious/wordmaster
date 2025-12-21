@@ -10,7 +10,7 @@ export class GameService {
   private static instance: GameService;
 
   private static readonly DEFAULT_ROUNDS = 3;
-  private static readonly DEFAULT_SUPPORTED_CATEGORIES = ['name', 'place', 'animal', 'city', 'food', 'company', 'country', 'app', 'language', 'disease', 'currency', 'bible', 'car'];
+  private static readonly DEFAULT_SUPPORTED_CATEGORIES = ['name', 'place', 'animal', 'food', 'company', 'country', 'app'];
   private static readonly MIN_CATEGORIES_PER_ROUND = 3;
   private static readonly MAX_CATEGORIES_PER_ROUND = 5;
   private static readonly DEFAULT_TIME_LIMIT = 20; // seconds
@@ -482,10 +482,24 @@ export class GameService {
         const letterLower = letter.toLowerCase();
         const letterUpper = letter.toUpperCase();
 
+        const possibleAnswers = await this.getPossibleAnswers(letterLower, trimmedCategory);
+
+        if (trimmedWord.length === 0 || trimmedWord == '') {
+          results.push({
+            valid: false,
+            wordScore: 0,
+            wordBonus: 0,
+            totalScore: 0,
+            word: trimmedWord,
+            category: trimmedCategory,
+            letter: letterUpper,
+            possibleAnswers,
+          });
+          continue; 
+        }
+
         // Check if word starts with the correct letter
         if (!trimmedWord.startsWith(letterLower)) {
-          const possibleAnswers = await this.getPossibleAnswers(letterLower, trimmedCategory);
-
           results.push({
             valid: false,
             wordScore: 0,
@@ -518,8 +532,6 @@ export class GameService {
         }
 
         if (!foundWord) {
-          const possibleAnswers = await this.getPossibleAnswers(letterLower, trimmedCategory);
-
           results.push({
             valid: false,
             wordScore: 0,

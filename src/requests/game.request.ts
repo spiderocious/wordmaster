@@ -60,12 +60,6 @@ export const validateAnswersValidation = [
     .isLength({ min: 1, max: 1 })
     .withMessage('Letter must be a single character'),
 
-  body('*.word')
-    .isString()
-    .trim()
-    .notEmpty()
-    .withMessage('Word must be a non-empty string'),
-
   body('*.category')
     .isString()
     .trim()
