@@ -1,5 +1,6 @@
 import { letterService } from './letter.service';
 import { cacheService } from './cache.service';
+import { gameStatsService } from './game-stats.service';
 import { WordModel, ValidationModel } from '@models';
 import { generateId, logger } from '@utils';
 import { IGame, IRound, ICategory, StartGameDTO, ServiceResult, ServiceSuccess, ServiceError } from '@shared/types';
@@ -9,7 +10,7 @@ export class GameService {
   private static instance: GameService;
 
   private static readonly DEFAULT_ROUNDS = 3;
-  private static readonly DEFAULT_SUPPORTED_CATEGORIES = ['name', 'place', 'animal', 'city'];
+  private static readonly DEFAULT_SUPPORTED_CATEGORIES = ['name', 'place', 'animal', 'city', 'food', 'company', 'country', 'app', 'language', 'disease', 'currency', 'bible', 'car'];
   private static readonly MIN_CATEGORIES_PER_ROUND = 3;
   private static readonly MAX_CATEGORIES_PER_ROUND = 5;
   private static readonly DEFAULT_TIME_LIMIT = 20; // seconds
@@ -557,6 +558,57 @@ export class GameService {
       return new ServiceSuccess(results);
     } catch (error: any) {
       logger.error('Error validating answers', error);
+      return new ServiceError(MESSAGE_KEYS.INTERNAL_SERVER_ERROR, MESSAGE_KEYS.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Submit game answers with validation and comprehensive statistics
+   */
+  public async submitGame(
+    answers: Array<{
+      letter: string;
+      word: string;
+      category: string;
+      timeLeft?: number;
+    }>,
+    lang: Language = 'en'
+  ): Promise<ServiceResult<{
+    results: Array<{
+      valid: boolean;
+      wordScore: number;
+      wordBonus: number;
+      totalScore: number;
+      word: string;
+      category: string;
+      letter: string;
+      comment?: string;
+      possibleAnswers?: string[];
+    }>;
+    stats: any;
+  }>> {
+    try {
+      // First, validate all answers
+      const validationResult = await this.validateAnswers(answers, lang);
+
+      if (!validationResult.success || !validationResult.data) {
+        return new ServiceError(
+          validationResult.error || MESSAGE_KEYS.INTERNAL_SERVER_ERROR,
+          validationResult.messageKey || MESSAGE_KEYS.INTERNAL_SERVER_ERROR
+        );
+      }
+
+      const validatedAnswers = validationResult.data;
+
+      // Calculate comprehensive statistics
+      const stats = gameStatsService.calculateStats(validatedAnswers, answers, lang);
+
+      return new ServiceSuccess({
+        results: validatedAnswers,
+        stats,
+      });
+    } catch (error: any) {
+      logger.error('Error submitting game', error);
       return new ServiceError(MESSAGE_KEYS.INTERNAL_SERVER_ERROR, MESSAGE_KEYS.INTERNAL_SERVER_ERROR);
     }
   }

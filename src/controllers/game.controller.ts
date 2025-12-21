@@ -69,6 +69,18 @@ export class GameController {
 
     return handleServiceResult(res, result);
   });
+
+  /**
+   * Submit game with validation and comprehensive statistics
+   */
+  public submitGame = asyncHandler(async (req: Request, res: Response) => {
+    const answers = req.body;
+    const lang = ResponseUtil.extractLanguage(req);
+
+    const result = await gameService.submitGame(answers, lang);
+
+    return handleServiceResult(res, result);
+  });
 }
 
 export const gameController = new GameController();

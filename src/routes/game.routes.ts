@@ -42,4 +42,12 @@ router.post(
   gameController.validateAnswers.bind(gameController)
 );
 
+// Submit game with validation and comprehensive statistics
+router.post(
+  '/submit',
+  validateAnswersValidation,
+  validateRequest,
+  gameController.submitGame.bind(gameController)
+);
+
 export default router;
