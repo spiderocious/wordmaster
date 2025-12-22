@@ -10,7 +10,7 @@ export class GameService {
   private static instance: GameService;
 
   private static readonly DEFAULT_ROUNDS = 3;
-  private static readonly DEFAULT_SUPPORTED_CATEGORIES = ['name', 'place', 'animal', 'food', 'company', 'country', 'car'];
+  private static readonly DEFAULT_SUPPORTED_CATEGORIES = ['name', 'place', 'animal', 'food', 'country'];
   private static readonly MIN_CATEGORIES_PER_ROUND = 3;
   private static readonly MAX_CATEGORIES_PER_ROUND = 5;
   private static readonly DEFAULT_TIME_LIMIT = 20; // seconds
