@@ -99,6 +99,13 @@ export class GameStatsService {
   }
 
   /**
+   * Round number to 2 decimal places
+   */
+  private round(value: number): number {
+    return Math.round(value * 100) / 100;
+  }
+
+  /**
    * Calculate comprehensive game statistics
    */
   public calculateStats(
@@ -112,14 +119,14 @@ export class GameStatsService {
     const totalScore = validatedAnswers.reduce((sum, ans) => sum + ans.totalScore, 0);
     const totalCorrect = validatedAnswers.filter((ans) => ans.valid).length;
     const totalWrong = validatedAnswers.filter((ans) => !ans.valid).length;
-    const accuracy = totalAnswers > 0 ? (totalCorrect / totalAnswers) * 100 : 0;
+    const accuracy = this.round(totalAnswers > 0 ? (totalCorrect / totalAnswers) * 100 : 0);
 
     // Score Analytics
-    const averageScore = totalAnswers > 0 ? totalScore / totalAnswers : 0;
+    const averageScore = this.round(totalAnswers > 0 ? totalScore / totalAnswers : 0);
     const bestScore = totalAnswers > 0 ? Math.max(...validatedAnswers.map((ans) => ans.totalScore)) : 0;
     const worstScore = totalAnswers > 0 ? Math.min(...validatedAnswers.map((ans) => ans.totalScore)) : 0;
     const totalSpeedBonus = validatedAnswers.reduce((sum, ans) => sum + ans.wordBonus, 0);
-    const averageSpeedBonus = totalAnswers > 0 ? totalSpeedBonus / totalAnswers : 0;
+    const averageSpeedBonus = this.round(totalAnswers > 0 ? totalSpeedBonus / totalAnswers : 0);
 
     // Time Analytics
     const answersWithTime = validatedAnswers
@@ -133,8 +140,8 @@ export class GameStatsService {
     const slowestAnswer = this.getSlowestAnswer(answersWithTime);
 
     const totalTimeLeft = answersWithTime.reduce((sum, ans) => sum + ans.timeLeft, 0);
-    const averageTimeLeft = answersWithTime.length > 0 ? totalTimeLeft / answersWithTime.length : 0;
-    const averageTimeTaken = (1.0 - averageTimeLeft) * GameStatsService.TIME_LIMIT;
+    const averageTimeLeft = this.round(answersWithTime.length > 0 ? totalTimeLeft / answersWithTime.length : 0);
+    const averageTimeTaken = this.round((1.0 - averageTimeLeft) * GameStatsService.TIME_LIMIT);
 
     // Category Performance
     const categoryBreakdown = this.calculateCategoryBreakdown(validatedAnswers);
@@ -199,8 +206,8 @@ export class GameStatsService {
 
     return {
       word: fastest.word,
-      timeLeft: fastest.timeLeft,
-      timeTaken: (1.0 - fastest.timeLeft) * GameStatsService.TIME_LIMIT,
+      timeLeft: this.round(fastest.timeLeft),
+      timeTaken: this.round((1.0 - fastest.timeLeft) * GameStatsService.TIME_LIMIT),
       category: fastest.category,
     };
   }
@@ -214,8 +221,8 @@ export class GameStatsService {
 
     return {
       word: slowest.word,
-      timeLeft: slowest.timeLeft,
-      timeTaken: (1.0 - slowest.timeLeft) * GameStatsService.TIME_LIMIT,
+      timeLeft: this.round(slowest.timeLeft),
+      timeTaken: this.round((1.0 - slowest.timeLeft) * GameStatsService.TIME_LIMIT),
       category: slowest.category,
     };
   }
@@ -252,9 +259,9 @@ export class GameStatsService {
       totalAttempts: stats.totalAttempts,
       correctAnswers: stats.correctAnswers,
       wrongAnswers: stats.wrongAnswers,
-      accuracy: stats.totalAttempts > 0 ? (stats.correctAnswers / stats.totalAttempts) * 100 : 0,
+      accuracy: this.round(stats.totalAttempts > 0 ? (stats.correctAnswers / stats.totalAttempts) * 100 : 0),
       totalScore: stats.totalScore,
-      averageScore: stats.totalAttempts > 0 ? stats.totalScore / stats.totalAttempts : 0,
+      averageScore: this.round(stats.totalAttempts > 0 ? stats.totalScore / stats.totalAttempts : 0),
     }));
   }
 
@@ -267,9 +274,9 @@ export class GameStatsService {
 
     return {
       name: best.category,
-      averageScore: best.averageScore,
+      averageScore: this.round(best.averageScore),
       correctCount: best.correctAnswers,
-      accuracy: best.accuracy,
+      accuracy: this.round(best.accuracy),
     };
   }
 
@@ -282,9 +289,9 @@ export class GameStatsService {
 
     return {
       name: worst.category,
-      averageScore: worst.averageScore,
+      averageScore: this.round(worst.averageScore),
       wrongCount: worst.wrongAnswers,
-      accuracy: worst.accuracy,
+      accuracy: this.round(worst.accuracy),
     };
   }
 
@@ -326,7 +333,7 @@ export class GameStatsService {
     return {
       word: best.word,
       bonus: best.wordBonus,
-      timeLeft: best.timeLeft,
+      timeLeft: this.round(best.timeLeft),
       category: best.category,
     };
   }
