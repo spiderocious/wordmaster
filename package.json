@@ -8,9 +8,10 @@
   "scripts": {
     "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/server.ts",
     "build": "tsc && tsc-alias",
-    "start": "node dist/server.js",
+    "start": "npm run migrate up && node dist/server.js",
     "clean": "rm -rf dist",
     "rebuild": "npm run clean && npm run build",
+    "migrate": "ts-node -r tsconfig-paths/register src/migrations/runner.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
