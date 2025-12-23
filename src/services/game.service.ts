@@ -519,10 +519,12 @@ export class GameService {
 
         if (!foundWord) {
           // Check if word exists in database with the specified category
+          // Try exact match first, then check aliases
           foundWord = await WordModel.findOne({
-            word: trimmedWord,
-            category: trimmedCategory,
-            startsWith: letterLower,
+            $or: [
+              { word: trimmedWord, category: trimmedCategory, startsWith: letterLower },
+              { aliases: trimmedWord, category: trimmedCategory, startsWith: letterLower }
+            ]
           }).select('word category popularity').lean();
 
           if (foundWord) {
