@@ -8,3 +8,4 @@ coverage
 .idea
 docs/
 build/
+ws-test/

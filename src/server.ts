@@ -1,7 +1,9 @@
+import { createServer } from 'http';
 import { App } from './app';
 import { database, logger } from '@utils';
 import { envConfig } from '@configs';
 import { letterService } from '@services';
+import { initializeWebSocket } from './websocket/server';
 
 class Server {
   private app: App;
@@ -18,8 +20,14 @@ class Server {
       // Build letter-category cache
       await letterService.buildLetterCategoryCache();
 
+      // Create HTTP server
+      const httpServer = createServer(this.app.getApp());
+
+      // Initialize WebSocket server
+      initializeWebSocket(httpServer);
+
       // Start server
-      const server = this.app.getApp().listen(envConfig.port, () => {
+      const server = httpServer.listen(envConfig.port, () => {
         logger.info(`AlphaGame API Server ${String(envConfig.port).padEnd(31)}  `);
       });
 

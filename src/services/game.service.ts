@@ -479,8 +479,8 @@ export class GameService {
 
         const trimmedWord = word.trim().toLowerCase();
         const trimmedCategory = category.trim().toLowerCase();
-        const letterLower = letter.toLowerCase();
-        const letterUpper = letter.toUpperCase();
+        const letterLower = letter?.toLowerCase();
+        const letterUpper = letter?.toUpperCase();
 
         const possibleAnswers = await this.getPossibleAnswers(letterLower, trimmedCategory);
 
