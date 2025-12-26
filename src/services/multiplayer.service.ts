@@ -187,11 +187,6 @@ class MultiplayerService extends EventEmitter {
         return new ServiceError(MESSAGE_KEYS.BAD_REQUEST, MESSAGE_KEYS.BAD_REQUEST);
       }
 
-      // Check if username already exists in room
-      if (room.players.has(username)) {
-        return new ServiceError(MESSAGE_KEYS.BAD_REQUEST, MESSAGE_KEYS.BAD_REQUEST);
-      }
-
       // Default avatar if not provided
       const playerAvatar = avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`;
 
