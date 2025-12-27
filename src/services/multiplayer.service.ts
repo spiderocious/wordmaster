@@ -310,15 +310,21 @@ class MultiplayerService extends EventEmitter {
    * Allows same username to reconnect if they disconnected or refreshed
    */
   public async rejoinRoom(
-    roomId: string,
+    joinCode: string,
     username: string,
     avatar?: string
   ): Promise<ServiceResult<GameRoom>> {
     try {
+      const roomId = this.cache.get<string>(`code:${joinCode.toUpperCase()}`);
+      if (!roomId) {
+        return new ServiceError(MESSAGE_KEYS.NOT_FOUND, MESSAGE_KEYS.NOT_FOUND);
+      }
+
       const room = this.cache.get<GameRoom>(roomId);
       if (!room) {
         return new ServiceError(MESSAGE_KEYS.NOT_FOUND, MESSAGE_KEYS.NOT_FOUND);
       }
+
 
       // Check if player exists in room
       const existingPlayer = room.players.get(username);

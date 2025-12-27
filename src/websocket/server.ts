@@ -369,17 +369,17 @@ function handleRoomJoin(socket: Socket, io: SocketIOServer): void {
  */
 function handleRoomRejoin(socket: Socket, io: SocketIOServer): void {
   socket.on('game:rejoin', async (data: {
-    roomId: string;
+    joinCode: string;
     username: string;
     avatar?: string;
   }) => {
     try {
-      logger.info(`game:rejoin request from ${data.username} to room ${data.roomId}`);
+      logger.info(`game:rejoin request from ${data.username} to room ${data.joinCode}`);
 
       const result = await multiplayerService.rejoinRoom(
-        data.roomId,
-        data.username,
-        data.avatar
+        data?.joinCode,
+        data?.username,
+        data?.avatar
       );
 
       if (result.success && result.data) {
