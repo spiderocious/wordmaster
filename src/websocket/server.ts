@@ -410,7 +410,7 @@ function handleRoomRejoin(socket: Socket, io: SocketIOServer): void {
         }
 
         // Send success response to rejoining player
-        socket.emit('game:rejoined', {
+        socket.emit('room:joined', {
           success: true,
           data: {
             roomId: room.roomId,
