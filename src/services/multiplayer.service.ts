@@ -345,7 +345,7 @@ class MultiplayerService extends EventEmitter {
       this.cache.set(roomId, room);
 
       // Emit event for broadcasting
-      this.emit('player:rejoined', {
+      this.emit('room:joined', {
         roomId,
         username,
         avatar: existingPlayer.avatar,
