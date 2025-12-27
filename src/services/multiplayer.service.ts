@@ -306,6 +306,57 @@ class MultiplayerService extends EventEmitter {
   }
 
   /**
+   * Rejoin an existing room (for reconnection scenarios)
+   * Allows same username to reconnect if they disconnected or refreshed
+   */
+  public async rejoinRoom(
+    roomId: string,
+    username: string,
+    avatar?: string
+  ): Promise<ServiceResult<GameRoom>> {
+    try {
+      const room = this.cache.get<GameRoom>(roomId);
+      if (!room) {
+        return new ServiceError(MESSAGE_KEYS.NOT_FOUND, MESSAGE_KEYS.NOT_FOUND);
+      }
+
+      // Check if player exists in room
+      const existingPlayer = room.players.get(username);
+      if (!existingPlayer) {
+        return new ServiceError(MESSAGE_KEYS.NOT_FOUND, MESSAGE_KEYS.NOT_FOUND);
+      }
+
+      // Update player status to active
+      existingPlayer.status = 'active';
+      existingPlayer.lastActivity = Date.now();
+
+      // Update avatar if provided
+      if (avatar) {
+        existingPlayer.avatar = avatar;
+      }
+
+      room.lastActivity = Date.now();
+      this.cache.set(roomId, room);
+
+      // Emit event for broadcasting
+      this.emit('player:rejoined', {
+        roomId,
+        username,
+        avatar: existingPlayer.avatar,
+        currentScore: existingPlayer.currentScore,
+        phase: room.phase
+      });
+
+      logger.info(`Player ${username} rejoined room ${roomId}`);
+
+      return new ServiceSuccess(room, MESSAGE_KEYS.SUCCESS);
+    } catch (error: any) {
+      logger.error('Error rejoining room', error);
+      return new ServiceError(MESSAGE_KEYS.INTERNAL_SERVER_ERROR, MESSAGE_KEYS.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
    * Send chat message
    */
   public async sendChatMessage(

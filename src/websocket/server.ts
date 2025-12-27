@@ -24,6 +24,7 @@ export function initializeWebSocket(httpServer: HTTPServer): SocketIOServer {
     // Register event handlers
     handleRoomCreate(socket, io);
     handleRoomJoin(socket, io);
+    handleRoomRejoin(socket, io);
     handleRoomLeave(socket, io);
     handleChatMessage(socket, io);
     handleRoomState(socket, io);
@@ -85,6 +86,24 @@ function setupServiceEventListeners(io: SocketIOServer): void {
       newHostId,
     });
     logger.debug(`Player ${username} left broadcast to room ${roomId}`);
+  });
+
+  // Player rejoined event - broadcast to room
+  multiplayerService.on('player:rejoined', ({ roomId, username, avatar, currentScore, phase }: {
+    roomId: string;
+    username: string;
+    avatar: string;
+    currentScore: number;
+    phase: string;
+  }) => {
+    io.to(roomId).emit('player:rejoined', {
+      username,
+      avatar,
+      currentScore,
+      phase,
+      message: `${username} has reconnected`,
+    });
+    logger.debug(`Player ${username} rejoined broadcast to room ${roomId}`);
   });
 
   // Chat message event - broadcast to room
@@ -340,6 +359,100 @@ function handleRoomJoin(socket: Socket, io: SocketIOServer): void {
         success: false,
         error: 'INTERNAL_ERROR',
         message: 'An error occurred while joining the room',
+      });
+    }
+  });
+}
+
+/**
+ * Handle game:rejoin event
+ */
+function handleRoomRejoin(socket: Socket, io: SocketIOServer): void {
+  socket.on('game:rejoin', async (data: {
+    roomId: string;
+    username: string;
+    avatar?: string;
+  }) => {
+    try {
+      logger.info(`game:rejoin request from ${data.username} to room ${data.roomId}`);
+
+      const result = await multiplayerService.rejoinRoom(
+        data.roomId,
+        data.username,
+        data.avatar
+      );
+
+      if (result.success && result.data) {
+        const room = result.data;
+
+        // Join the socket to the room
+        socket.join(room.roomId);
+
+        // Update player with socket ID
+        const player = room.players.get(data.username);
+        if (player) {
+          player.socketId = socket.id;
+          multiplayerService.updateRoom(room);
+        }
+
+        // Get current round info if in playing phase
+        let currentRound = undefined;
+        if (room.phase === 'playing' && room.rounds.length > 0) {
+          const round = room.rounds[room.currentRound - 1];
+          if (round) {
+            currentRound = {
+              roundNumber: round.roundNumber,
+              letter: round.letter,
+              categories: round.categories,
+              startedAt: round.startedAt,
+            };
+          }
+        }
+
+        // Send success response to rejoining player
+        socket.emit('game:rejoined', {
+          success: true,
+          data: {
+            roomId: room.roomId,
+            joinCode: room.joinCode,
+            hostId: room.hostId,
+            phase: room.phase,
+            currentRound: room.currentRound,
+            totalRounds: room.totalRounds,
+            players: Array.from(room.players.values()).map(p => ({
+              userId: p.userId,
+              username: p.username,
+              avatar: p.avatar,
+              role: p.role,
+              status: p.status,
+              currentScore: p.currentScore,
+              isGuest: p.isGuest,
+            })),
+            config: room.config,
+            chatMessages: room.chatMessages,
+            round: currentRound,
+            winner: room.winner,
+          },
+        });
+
+        logger.info(`Player ${data.username} rejoined room ${room.roomId}`);
+      } else {
+        socket.emit('error', {
+          success: false,
+          error: result.error || 'UNKNOWN_ERROR',
+          message: result.error === 'BAD_REQUEST'
+            ? 'Cannot rejoin - player has left the game'
+            : 'Failed to rejoin room',
+        });
+
+        logger.warn(`Room rejoin failed for ${data.username}: ${result.error}`);
+      }
+    } catch (error: any) {
+      logger.error('Error handling game:rejoin', error);
+      socket.emit('error', {
+        success: false,
+        error: 'INTERNAL_ERROR',
+        message: 'An error occurred while rejoining the room',
       });
     }
   });
