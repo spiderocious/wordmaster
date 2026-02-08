@@ -20,6 +20,7 @@ export interface IGame {
 export interface StartGameDTO {
   rounds?: number;
   supportedCategories?: string[];
+  excludedLetters?: string[];
 }
 
 export interface StartGameResponse {

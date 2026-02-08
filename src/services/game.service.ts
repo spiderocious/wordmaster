@@ -14,6 +14,7 @@ export class GameService {
   private static readonly MIN_CATEGORIES_PER_ROUND = 3;
   private static readonly MAX_CATEGORIES_PER_ROUND = 5;
   private static readonly DEFAULT_TIME_LIMIT = 20; // seconds
+  private static readonly SINGLE_GAME_EXCLUDED_LETTERS = ['Q', 'X', 'Z']; // Letters that are often difficult for players
 
   private static readonly CATEGORY_DISPLAY_NAMES: Record<string, string> = {
     name: 'Name',
@@ -115,6 +116,7 @@ export class GameService {
     try {
       const rounds = data.rounds || GameService.DEFAULT_ROUNDS;
       const supportedCategories = data.supportedCategories || GameService.DEFAULT_SUPPORTED_CATEGORIES;
+      const excludedLetters = (GameService.SINGLE_GAME_EXCLUDED_LETTERS || []).map(l => l.toUpperCase());
 
       // Validate rounds
       if (rounds < 1 || rounds > 10) {
@@ -130,7 +132,8 @@ export class GameService {
       const selectedLetters = letterService.selectRandomLetters(
         rounds,
         supportedCategories,
-        GameService.MIN_CATEGORIES_PER_ROUND
+        GameService.MIN_CATEGORIES_PER_ROUND,
+        excludedLetters
       );
 
       if (selectedLetters.length < rounds) {

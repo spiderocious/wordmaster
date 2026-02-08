@@ -119,13 +119,17 @@ export class LetterService {
   public selectRandomLetters(
     count: number,
     supportedCategories: string[],
-    minCategories: number = 3
+    minCategories: number = 3,
+    excludedLetters: string[] = []
   ): string[] {
     const selectedLetters: string[] = [];
     const maxRetries = 100;
     let retries = 0;
 
-    const shuffledLetters = [...LetterService.LETTERS].sort(() => Math.random() - 0.5);
+    const availableLetters = LetterService.LETTERS.filter(
+      letter => !excludedLetters.includes(letter)
+    );
+    const shuffledLetters = [...availableLetters].sort(() => Math.random() - 0.5);
 
     for (const letter of shuffledLetters) {
       if (selectedLetters.length >= count) {
